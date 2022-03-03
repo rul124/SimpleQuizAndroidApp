@@ -1,15 +1,13 @@
 package com.example.simplequizapp
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.core.content.ContextCompat
 import org.w3c.dom.Text
 
@@ -17,6 +15,8 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
     private var mCurrentPosition: Int = 1
     private var mQuestionsList: ArrayList<Question>? = null
     private var mSelectedOptionPosition : Int = 0
+    private var mUserName: String? = null
+    private var mCorrectAnswer: Int = 0
 
     private var progressBar : ProgressBar? = null
     private var tvProgress : TextView? = null
@@ -32,6 +32,10 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz_questions)
+
+        // get the username from intent
+        mUserName = intent.getStringExtra(Constants.USER_NAME)
+        mCorrectAnswer = 0
 
         // load all views by ids
         progressBar = findViewById(R.id.progressBar)
@@ -66,6 +70,9 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
 //            // print errors : questions ?
 //            Log.e("Questions", i.question)
 //        }
+
+        // make all options to be default options view
+        defaultOptionsView()
 
         val question: Question = mQuestionsList!![mCurrentPosition - 1]
 
@@ -156,7 +163,69 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             R.id.btn_submit -> {
-                // TODO implement submit button listner
+                // if select no option, just skip this question and go to the next question
+                if(mSelectedOptionPosition == 0) {
+                     mCurrentPosition ++
+                    when {
+                        mCurrentPosition <= mQuestionsList!!.size -> {
+                            setQuestion()
+                        }
+                        else -> {
+                            val intent = Intent(this, ResultActivity::class.java)
+
+                            // send all those values
+                            intent.putExtra(Constants.USER_NAME, mUserName)
+                            intent.putExtra(Constants.CORRECT_ANSWERS, mCorrectAnswer)
+                            intent.putExtra(Constants.TOTAL_QUESTIONS, mQuestionsList?.size)
+
+                            startActivity(intent)
+                            finish()
+                        }
+                    }
+                } else { // otherwise, compare the answer
+                    val question = mQuestionsList?.get(mCurrentPosition - 1)
+                    if(question!!.correctAnswer != mSelectedOptionPosition) {
+                        // show wrong answer
+                        answerView(
+                            mSelectedOptionPosition,
+                            R.drawable.wrong_option_border_bg
+                        )
+                    } else {
+                        mCorrectAnswer += 1
+                    }
+
+                    // In general, show correct answer
+                    answerView(
+                        question!!.correctAnswer,
+                        R.drawable.correction_option_border_bg
+                    )
+
+                    if(mCurrentPosition == mQuestionsList!!.size) {
+                        btnSubmit?.text = "FINISH"
+                    } else {
+                        btnSubmit?.text = "GO TO NEXT QUESTION"
+                    }
+
+                    // reset OptionPosition
+                    mSelectedOptionPosition = 0
+                }
+            }
+        }
+    }
+
+    private fun answerView(answer: Int, drawableView: Int) {
+        when(answer) {
+            1 -> {
+                tvOptionOne?.background = ContextCompat.getDrawable(this, drawableView)
+            }
+            2 -> {
+                tvOptionTwo?.background = ContextCompat.getDrawable(this, drawableView)
+            }
+            3 -> {
+                tvOptionThree?.background = ContextCompat.getDrawable(this, drawableView)
+            }
+            4 -> {
+                tvOptionFour?.background = ContextCompat.getDrawable(this, drawableView)
             }
         }
     }

@@ -21,6 +21,9 @@ class MainActivity : AppCompatActivity() {
                 // move to another screen
                     // this will move from this to another file
                 val intent = Intent(this, QuizQuestionsActivity::class.java)
+
+                // pass data
+                intent.putExtra(Constants.USER_NAME, etName.text.toString())
                 startActivity(intent)
                 // close the current screen
                 finish()
